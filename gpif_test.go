@@ -28,5 +28,17 @@ func TestParsePackage(t *testing.T) {
 		if err != nil {
 			t.Errorf("%s", err)
 		}
+		if len(pkgs) == 0 {
+			t.Errorf("no ast")
+		}
 	}
+}
+
+func TestTraverseAST(t *testing.T) {
+	in := "./test"
+	pkgs, err := ParsePackage(in)
+	if err != nil {
+		t.Errorf("%s", err)
+	}
+	traverseAST(pkgs)
 }
