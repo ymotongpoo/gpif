@@ -1,0 +1,27 @@
+{
+    "repos": [
+        "github.com/simeji/jid",
+        "github.com/donutloop/mux",
+        "github.com/kelseyhightower/konfd",
+        "github.com/pressly/chi",
+        "github.com/mustafaakin/gongular",
+        "github.com/ncw/rclone",
+        "github.com/docker/docker",
+        "github.com/julienschmidt/httprouter",
+        "github.com/kubernetes/kubernetes",
+        "github.com/gitql/gitql",
+        "github.com/Swatto/td",
+        "github.com/pureconfig/pureconfig",
+        "github.com/gitlantern/lantern",
+        "github.com/grafana/grafana",
+        "github.com/mingrammer/gomo",
+        "github.com/elastic/beats",
+        "github.com/avelino/awesome-go",
+        "github.com/gogits/gogs",
+        "github.com/agnivade/funnel",
+        "github.com/blox/blox",
+        "github.com/hyperledger/fabric",
+        "github.com/coreos/etcd",
+        "github.com/spf13/hugo"
+    ]
+}

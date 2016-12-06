@@ -20,6 +20,7 @@ import (
 	"go/token"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 // ParsePackage start parsing all .go files under pkgroot and returns AST tree in map.
@@ -38,6 +39,12 @@ func DirParser(buf map[string][]string) filepath.WalkFunc {
 		if !info.IsDir() {
 			return nil
 		}
+
+		// Skip dot directories, especially ".git"
+		if hasDotDir(path) {
+			return nil
+		}
+
 		fset := token.NewFileSet()
 		pkgs, first := parser.ParseDir(fset, path, nil, parser.ImportsOnly)
 		if first != nil {
@@ -47,6 +54,16 @@ func DirParser(buf map[string][]string) filepath.WalkFunc {
 		buf[path] = paths
 		return nil
 	}
+}
+
+func hasDotDir(path string) bool {
+	list := strings.Split(path, string(filepath.Separator))
+	for _, s := range list {
+		if strings.HasPrefix(s, ".") {
+			return true
+		}
+	}
+	return false
 }
 
 const (
