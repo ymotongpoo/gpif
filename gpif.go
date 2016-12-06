@@ -15,46 +15,80 @@
 package gpif
 
 import (
-	"fmt"
 	"go/ast"
 	"go/parser"
 	"go/token"
+	"os"
+	"path/filepath"
 )
 
 // ParsePackage start parsing all .go files under pkgroot and returns AST tree in map.
-func ParsePackage(pkgroot string) (map[string]*ast.Package, error) {
-	fset := token.NewFileSet()
-	pkgs, first := parser.ParseDir(fset, pkgroot, nil, parser.ImportsOnly)
-	if first != nil {
-		return nil, first
+func ParsePackage(pkgroot string) (map[string][]string, error) {
+	buf := make(map[string][]string)
+	err := filepath.Walk(pkgroot, DirParser(buf))
+	return buf, err
+}
+
+// DirParser runs parser.ParseDir
+func DirParser(buf map[string][]string) filepath.WalkFunc {
+	return func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if !info.IsDir() {
+			return nil
+		}
+		fset := token.NewFileSet()
+		pkgs, first := parser.ParseDir(fset, path, nil, parser.ImportsOnly)
+		if first != nil {
+			return first
+		}
+		paths := traverseAST(pkgs)
+		buf[path] = paths
+		return nil
 	}
-	return pkgs, nil
 }
 
-type packageVisitor func(node ast.Node) ast.Visitor
+const (
+	bufSize      = 100
+	totalBufSize = 10000
+)
 
-func (p packageVisitor) Visit(node ast.Node) ast.Visitor {
-	return p(node)
+type packageVisitor struct {
+	imports []string
 }
 
-func ShowImport(node ast.Node) ast.Visitor {
-	switch n := node.(type) {
-	case *ast.BasicLit:
-		bl := (*ast.BasicLit)(n)
-		fmt.Printf("%v\n", bl.Value)
-		return packageVisitor(ShowImport)
-	default:
-		fmt.Printf("%#v\n", n)
-		return packageVisitor(ShowImport)
+func newPackageVisitor() *packageVisitor {
+	imports := make([]string, 0, bufSize)
+	return &packageVisitor{
+		imports: imports,
 	}
-	return nil
 }
 
-func traverseAST(root map[string]*ast.Package) {
-	for k, v := range root {
-		fmt.Println(k)
-		if v != nil {
-			ast.Walk(packageVisitor(ShowImport), v)
+func (p *packageVisitor) Visit(node ast.Node) ast.Visitor {
+	if node != nil {
+		switch n := node.(type) {
+		case *ast.ImportSpec:
+			is := (*ast.ImportSpec)(n)
+			if is.Path != nil {
+				p.imports = append(p.imports, (*is.Path).Value)
+			}
+			return p
+		default:
+			return p
 		}
 	}
+	return p
+}
+
+func traverseAST(root map[string]*ast.Package) []string {
+	result := make([]string, 0, totalBufSize)
+	for _, v := range root {
+		if v != nil {
+			pv := newPackageVisitor()
+			ast.Walk(pv, v)
+			result = append(result, pv.imports...)
+		}
+	}
+	return result[:len(result)]
 }

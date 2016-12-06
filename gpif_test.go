@@ -15,6 +15,9 @@
 package gpif
 
 import (
+	"go/parser"
+	"go/token"
+	"os"
 	"testing"
 )
 
@@ -29,16 +32,36 @@ func TestParsePackage(t *testing.T) {
 			t.Errorf("%s", err)
 		}
 		if len(pkgs) == 0 {
-			t.Errorf("no ast")
+			t.Errorf("no direcotry")
+		}
+
+		for k, v := range pkgs {
+			t.Logf("%v: %v", k, v) // Verbose testing
 		}
 	}
 }
 
 func TestTraverseAST(t *testing.T) {
 	in := "./test"
-	pkgs, err := ParsePackage(in)
+	fset := token.NewFileSet()
+	pkgs, first := parser.ParseDir(fset, in, nil, parser.ImportsOnly)
+	if first != nil {
+		t.Errorf("%s", first)
+	}
+	traverseAST(pkgs)
+}
+
+func TestDirParser(t *testing.T) {
+	in := "./test"
+	buf := make(map[string][]string)
+	dirParser := DirParser(buf)
+	fp, err := os.Open(in)
 	if err != nil {
 		t.Errorf("%s", err)
 	}
-	traverseAST(pkgs)
+	dir, err := fp.Stat()
+	if err != nil {
+		t.Errorf("%s", err)
+	}
+	dirParser(in, dir, nil)
 }
