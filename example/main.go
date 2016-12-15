@@ -21,6 +21,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"sort"
 	"time"
 
 	"github.com/ymotongpoo/gpif"
@@ -53,19 +54,27 @@ func main() {
 		fmt.Printf("[Processing]: %s\n", r)
 		err := GoGet(r)
 		if err != nil {
-			fmt.Printf("[Error] [%s] %v\n", r, err)
+			fmt.Printf("[Error] %s: %v\n", r, err)
 			time.Sleep(Interval)
 			continue
 		}
-		fmt.Printf("[Done]: [%s]\n", r)
+		fmt.Printf("[Done]: %s\n", r)
 
 		pkgpath := filepath.Join(GopathSrc, r)
 		pkgs, err := gpif.ParsePackage(pkgpath)
 		if err != nil {
-			fmt.Printf("[Error] [%s] %v\n", r, err)
+			fmt.Printf("[Error] %s: %v\n", r, err)
 		}
+
 		for k, v := range pkgs {
-			fmt.Printf("%s: %s\n", k, v)
+			if len(v) == 0 {
+				continue
+			}
+			fmt.Println(k, ":")
+			sort.Strings(v)
+			for _, pkg := range v {
+				fmt.Println("\t", pkg)
+			}
 		}
 		time.Sleep(Interval)
 	}

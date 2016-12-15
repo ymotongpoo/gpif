@@ -99,13 +99,22 @@ func (p *packageVisitor) Visit(node ast.Node) ast.Visitor {
 }
 
 func traverseAST(root map[string]*ast.Package) []string {
-	result := make([]string, 0, totalBufSize)
+	buf := make(map[string]bool)
 	for _, v := range root {
 		if v != nil {
 			pv := newPackageVisitor()
 			ast.Walk(pv, v)
-			result = append(result, pv.imports...)
+
+			for _, i := range pv.imports {
+				if _, ok := buf[i]; !ok {
+					buf[i] = true
+				}
+			}
 		}
 	}
-	return result[:len(result)]
+	result := make([]string, 0, len(buf))
+	for k, _ := range buf {
+		result = append(result, k)
+	}
+	return result
 }
